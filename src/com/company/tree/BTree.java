@@ -263,28 +263,12 @@ public class BTree<T> implements iTree<T> {
     }
 
     private void reculcDepth() {
-        depth = culcDepthRec(root, -1);
-    }
-
-    private int culcDepthRec(Node root, int depth) { //todo without rec
-        if (root == null) return depth;
-        int[] ds = new int[root.getChildrenCnt()];
-        for (int i = 0; i < ds.length; i++) {
-            ds[i] = culcDepthRec(root.getChild(i), depth + 1);
+        depth = 0;
+        Node pointer = root;
+        while (!pointer.isLeaf()) {
+            pointer = pointer.getLeftChild();
+            depth++;
         }
-        if (ds.length == 0) {
-            return depth + 1;
-        }
-
-        return max(ds);
-    }
-
-    private int max(int[] val) {
-        int max = Integer.MIN_VALUE;
-        for (int i : val) {
-            if (i > max) max = i;
-        }
-        return max;
     }
 
     @Override
@@ -310,8 +294,8 @@ public class BTree<T> implements iTree<T> {
 
         Node<T> addingLeaf = findLeafToAdd(root, o);
         addingLeaf.addKey(o);
-
         balance(addingLeaf);
+
         size++;
         reculcDepth();
 
@@ -386,10 +370,72 @@ public class BTree<T> implements iTree<T> {
         }
     }
 
+    @Override
+    public String toString() {
+        String[] text = new String[1];
+        text[0] = "";
+        return getStringRec(text, root);
+    }
+
+    private String getStringRec(String[] text, Node<T> node){
+        int h = getHeight(node);
+        text[0] += getSpace(h) + "h=" + getHeight(node) + " " + Arrays.toString(node.getKeys()) + "\n" ;
+        if(node.isLeaf()) {
+            return text[0];
+        }
+        for (int i = 0; i < node.getChildrenCnt(); i++) {
+            getStringRec(text, node.getChild(i));
+        }
+        return text[0];
+
+    }
+
+    private String getSpace(int cnt){
+        String l = "";
+        for (int i = 0; i < cnt; i++) {
+            l +="         ";
+        }
+        return l;
+    }
+
+    private int getHeight(Node<T> node){
+        int h = 0;
+        while (node != root) {
+            h++;
+            node = node.getRoot();
+        }
+        return h;
+    }
+
 
     @Override
     public BTree<T> copy() {
-        return null;
+        BTree<T> tree = new BTree<>(ORDER, comparator);
+        if(isEmpty()) return tree;
+
+        tree.root = recCopy(this.root);
+        tree.size = size;
+        tree.depth = depth;
+
+        return tree;
+    }
+
+    public Node<T> recCopy(Node<T> node){
+        Node<T> newNode = new Node<>();
+
+
+        T[] keys = (T[])new Object[node.getKeysCnt()];
+        for (int i = 0; i < node.getKeysCnt(); i++) {
+            keys[i] = node.getKey(i);
+        }
+        newNode.setKeys(keys);
+
+
+        for (int i = 0; i < node.getChildrenCnt() && !node.isLeaf(); i++) {
+            newNode.addChild(recCopy(node.getChild(i)));
+        }
+        return newNode;
+
     }
 
     private void balance(Node<T> node) {
@@ -443,7 +489,6 @@ public class BTree<T> implements iTree<T> {
         }
     }
 
-
     private void removeFromEdge(T o, Node<T> node){
 
         int indexKey = node.indexOfKey(o);
@@ -457,8 +502,6 @@ public class BTree<T> implements iTree<T> {
 
         balance(l_max);
     }
-
-
 
     private boolean tryToShift(Node<T> node){
         if(node == root) return false;
@@ -474,8 +517,6 @@ public class BTree<T> implements iTree<T> {
         return false;
 
     }
-
-
 
     private void leftShift(Node<T> root, int indexChild){
 
@@ -589,145 +630,5 @@ public class BTree<T> implements iTree<T> {
         return null;
     }
 
-    public boolean test(){
-       return new Tester().test();
-    }
-
-    private class Tester{
-        public boolean test() {
-            int depth = depth();
-            int size = size();
-            boolean res = true;
-//        HashMap<Node<T>, Integer> _nodes = getNodeMap();
-            ArrayList<Node<T>> nodes = getNodeList();
-            double min = log(ORDER, size);
-            double max = log((int)(ORDER/2), ((size-1)/2));
-            if(size > 2)
-                if(log(ORDER, size)  -1 > depth || log((int)(ORDER/2), ((size-1)/2)) +1  < depth ){
-                    System.out.println("ERROR DEPTH (ORDER)");
-                    res = false;
-                }
-            if(!checkDepth()){
-                System.out.println("ERROR DEPTH");
-                res = false;
-            }
-
-            for (Node<T> node : nodes) {
-                if(node.getKeysCnt() +1 != node.getChildrenCnt() && !node.isLeaf()){
-                    System.out.println("ERROR NODE Child numbers : "+ node);
-                    res = false;
-                }
-                if(!node.checkSortKeys()){
-                    System.out.println("ERROR NODE key sort : "+ node);
-                    res = false;
-                }
-                if((node.getKeysCnt() < MIN_KEY && node != root)
-                        || node.getKeysCnt() > MAX_KEY ){
-                        System.out.println("ERROR NODE key cnt : "+ node);
-                        res = false;
-                }
-            }
-
-            if(!checkSort()){
-                System.out.println("ERROR SORT");
-                res = false;
-            }
-
-            return res;
-
-        }
-
-        private boolean checkDepth(){
-            return getMinDepth() == depth();
-        }
-
-        private int getMinDepth(){
-            return calcMinDepthRec(root, -1);
-        }
-
-        private int calcMinDepthRec(Node root, int depth) { //todo without rec
-            if (root == null) return depth;
-            int[] ds = new int[root.getChildrenCnt()];
-            for (int i = 0; i < ds.length; i++) {
-                ds[i] = culcDepthRec(root.getChild(i), depth + 1);
-            }
-            if (ds.length == 0) {
-                return depth + 1;
-            }
-
-            return min(ds);
-        }
-
-        private int min(int[] val) {
-            int min = Integer.MAX_VALUE;
-            for (int i : val) {
-                if (i < min) min = i;
-            }
-            return min;
-        }
-
-        private boolean checkSort(){
-            T[] keys = getSortKeys();
-            for (int i = 1; i < keys.length; i++) {
-                if(comparator.compare(keys[i-1], keys[i]) > 0) return false;
-            }
-            return true;
-        }
-
-        private T[] getSortKeys(){
-            ArrayList<T> arrayList = new ArrayList<>();
-            fillKeys(arrayList, root);
-            return (T[])arrayList.toArray();
-
-        }
-
-        private  void  fillKeys(ArrayList<T> keys, Node<T> root){
-            if(root.isLeaf()) {
-                keys.addAll(Arrays.asList(root.getKeys()));
-                return;
-            }
-            for (int i = 0; i < root.getChildren().length; i++) {
-                fillKeys(keys, root.getChild(i));
-                if(i < root.getKeys().length){
-                    keys.add(root.getKey(i));
-                }
-            }
-
-        }
-
-
-        private ArrayList<Node<T>> getNodeList(){
-            ArrayList<Node<T>> list = new ArrayList<>();
-            fillList(list, root);
-            return list;
-        }
-
-        private void fillList(ArrayList<Node<T>> list, Node<T> node){
-            list.add(node);
-            if(node.isLeaf()) return;
-            for (Node<T> tNode : node.children) {
-                fillList(list, tNode);
-            }
-        }
-
-        private HashMap<Node<T>, Integer>  getNodeMap(){
-            HashMap<Node<T>, Integer> nodeMap = new HashMap<>();
-            fillMap(nodeMap, root, 0);
-            return nodeMap;
-        }
-
-        private void fillMap(HashMap<Node<T>, Integer> map, Node<T> root, int depth){
-            map.put(root,depth);
-            if(!root.isLeaf()) {
-                for (Node node : root.children) {
-                    fillMap(map, node, depth + 1);
-                }
-            }
-        }
-
-        private double log(double a, double b){
-            return Math.log(b)/Math.log(a);
-        }
-    }
 
 }

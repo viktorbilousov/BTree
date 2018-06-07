@@ -26,4 +26,6 @@ public interface iTree<T> {
 
     void clean(); // löscht alle Objekte aus dem Baum
 
+    String toString();
+
 };
