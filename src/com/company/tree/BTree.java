@@ -17,13 +17,13 @@ public class BTree<T> implements iTree<T> {
 
     private class Node<T> {
         private Node<T> root = null;
-        private Node<T>[] child = new Node[0];
+        private Node<T>[] children = new Node[0];
         private T[] keys = (T[]) new Object[0];
         private Comparator<T> _comp = (Comparator<T>) comparator;
 
-        public Node(T[] keys, Node<T> root, Node<T>[] child) {
+        public Node(T[] keys, Node<T> root, Node<T>[] children) {
             this.root = root;
-            this.child = child;
+            this.children = children;
             this.keys = keys;
         }
 
@@ -44,25 +44,26 @@ public class BTree<T> implements iTree<T> {
             this.root = root;
         }
 
-        public Node<T>[] getChilds() {
-            return child;
+        public Node<T>[] getChildren() {
+            return children;
         }
 
         public Node<T> getChild(int index) {
-            return child[index];
+            return children[index];
         }
 
         public Node<T> getLeftChild() {
-            return child[0];
+            return children[0];
         }
 
         public Node<T> getRightChild() {
-            return child[child.length - 1];
+            return children[children.length - 1];
         }
 
-        public void setChild(Node<T>[] child) {
-            this.child = child;
+        public void setChildren(Node<T>[] children) {
+            this.children = children;
         }
+
 
         public T[] getKeys() {
             return keys;
@@ -80,8 +81,8 @@ public class BTree<T> implements iTree<T> {
             return keys.length;
         }
 
-        public int getChildCnt() {
-            return child.length;
+        public int getChildrenCnt() {
+            return children.length;
         }
 
         public T getFirstKey() {
@@ -92,11 +93,25 @@ public class BTree<T> implements iTree<T> {
             return keys[keys.length - 1];
         }
 
+        public int indexOfKey(T key){
+            for (int i = 0; i < keys.length; i++) {
+                if(_comp.compare(key, keys[i]) == 0) return i;
+            }
+            return -1;
+        }
+
+        public int indexOfChild(Node<T> child){
+            for (int i = 0; i < this.children.length; i++) {
+                if(children[i].equals(child)) return i;
+            }
+            return -1;
+        }
+
         //endregion
 
 
         public boolean isLeaf() {
-            return child.length == 0;
+            return children.length == 0;
         }
 
         public void addKey(T key) {
@@ -141,10 +156,10 @@ public class BTree<T> implements iTree<T> {
 
         public void addChild(Node<T> newChild) { // todo binserach ?
             newChild.setRoot(this);
-            Node<T>[] newChildArr = new Node[child.length + 1];
-            if (child.length == 0) {
+            Node<T>[] newChildArr = new Node[children.length + 1];
+            if (children.length == 0) {
                 newChildArr[0] = newChild;
-                child = newChildArr;
+                children = newChildArr;
                 return;
             }
             int index = 0;
@@ -152,40 +167,40 @@ public class BTree<T> implements iTree<T> {
             T lastKeyNewChild = newChild.getLastKey();
             T firstKeyNewChild = newChild.getFirstKey();
 
-            if (_comp.compare(lastKeyNewChild, child[0].getFirstKey()) <= 0) {
+            if (_comp.compare(lastKeyNewChild, children[0].getFirstKey()) <= 0) {
                 newChildArr[0] = newChild;
-                System.arraycopy(child, 0, newChildArr, 1, child.length);
+                System.arraycopy(children, 0, newChildArr, 1, children.length);
 
-            } else if (_comp.compare(firstKeyNewChild, child[child.length - 1].getLastKey()) >= 0) {
-                System.arraycopy(child, 0, newChildArr, 0, child.length);
+            } else if (_comp.compare(firstKeyNewChild, children[children.length - 1].getLastKey()) >= 0) {
+                System.arraycopy(children, 0, newChildArr, 0, children.length);
                 newChildArr[newChildArr.length - 1] = newChild;
             } else {
-                for (index = 1; index < child.length; index++) {
-                    T lastKeyOldLastChild = child[index-1].getLastKey();
-                    T firstKeyOldCurrChild = child[index].getFirstKey();
+                for (index = 1; index < children.length; index++) {
+                    T lastKeyOldLastChild = children[index-1].getLastKey();
+                    T firstKeyOldCurrChild = children[index].getFirstKey();
                     int leftComp = _comp.compare(firstKeyNewChild, lastKeyOldLastChild);
                     int rightComp = _comp.compare(lastKeyNewChild, firstKeyOldCurrChild);
 
                     if (leftComp >= 0 && rightComp <= 0 ) {
-                        System.arraycopy(child, 0, newChildArr, 0, index);
+                        System.arraycopy(children, 0, newChildArr, 0, index);
                         newChildArr[index] = newChild;
-                        System.arraycopy(child, index, newChildArr, index + 1, child.length - index);
+                        System.arraycopy(children, index, newChildArr, index + 1, children.length - index);
                         break;
                     }
                 }
             }
-            child = newChildArr;
+            children = newChildArr;
         }
 
         public boolean removeChild(Node<T> removeChild) { // remove without recursive dipping
-            Node<T>[] newChild = new Node[this.child.length - 1];
+            Node<T>[] newChild = new Node[this.children.length - 1];
             int i = 0;
-            for (i = 0; i < child.length; i++) {
-                if (removeChild.equals(child[i])) {
-                    child[i].setRoot(null);
-                    System.arraycopy(child, 0, newChild, 0, i);
-                    System.arraycopy(child, i + 1, newChild, i, child.length - i - 1);
-                    child = newChild;
+            for (i = 0; i < children.length; i++) {
+                if (removeChild.equals(children[i])) {
+                    children[i].setRoot(null);
+                    System.arraycopy(children, 0, newChild, 0, i);
+                    System.arraycopy(children, i + 1, newChild, i, children.length - i - 1);
+                    children = newChild;
                     return true;
                 }
             }
@@ -202,7 +217,7 @@ public class BTree<T> implements iTree<T> {
 
         public void clean() {
             root = null;
-            child = new Node[0];
+            children = new Node[0];
             keys = (T[]) new Object[0];
         }
 
@@ -234,6 +249,7 @@ public class BTree<T> implements iTree<T> {
         ORDER = order;
         MAX_KEY = ORDER - 1;
         MIN_KEY = ORDER / 2 - 1;
+
     }
 
     @Override
@@ -252,7 +268,7 @@ public class BTree<T> implements iTree<T> {
 
     private int culcDepthRec(Node root, int depth) { //todo without rec
         if (root == null) return depth;
-        int[] ds = new int[root.getChildCnt()];
+        int[] ds = new int[root.getChildrenCnt()];
         for (int i = 0; i < ds.length; i++) {
             ds[i] = culcDepthRec(root.getChild(i), depth + 1);
         }
@@ -308,7 +324,20 @@ public class BTree<T> implements iTree<T> {
 
     @Override
     public boolean remove(T o) {
-        return false;
+        Node<T> removeNode = getNode(o);
+        if(removeNode == null) return false;
+
+        if(removeNode.isLeaf()) {
+            removeNode.removeKey(o);
+            balance(removeNode);
+        }else {
+            removeFromRoot(o, removeNode);
+        }
+
+
+        size--;
+        reculcDepth();
+        return true;
     }
 
     @Override
@@ -320,8 +349,44 @@ public class BTree<T> implements iTree<T> {
 
     @Override
     public boolean isContain(T o) {
-        return false;
+        return getNode(o) != null;
     }
+
+    public Node<T> getNode(T o){
+        Node<T> pointer = root;
+
+        while (true){
+            if(comparator.compare(o, pointer.getFirstKey()) < 0) {
+                if(pointer.isLeaf()) return null;
+                pointer = pointer.getLeftChild();
+                continue;
+            }
+            if(comparator.compare(o, pointer.getLastKey()) > 0){
+                if(pointer.isLeaf()) return null;
+                pointer = pointer.getRightChild();
+                continue;
+            }
+            if(pointer.getKeysCnt() == 1 ){
+                if(comparator.compare(o, pointer.getFirstKey()) != 0) return null;
+                return pointer;
+            }
+
+            for (int i = 0; i < pointer.getKeysCnt()-1; i++) {
+                int c_left =  comparator.compare(o, pointer.getKey(i));
+                int c_right = comparator.compare(o, pointer.getKey(i+1));
+
+                if(c_left == 0 || c_right == 0) return pointer;
+
+                if(c_left > 0 && c_right < 0){
+                    if(pointer.isLeaf()) return null;
+
+                    pointer = pointer.getChild(i+1);
+                    break;
+                }
+            }
+        }
+    }
+
 
     @Override
     public BTree<T> copy() {
@@ -349,10 +414,122 @@ public class BTree<T> implements iTree<T> {
             root.removeChild(node);
             root.addChild(left);
             root.addChild(right);
-
             node.clean();
             balance(root);
         }
+        else if(node.getKeysCnt() < MIN_KEY) {
+            if(node == root) return;
+            Node<T> root = node.root;
+
+          //  if(node.isLeaf()) {
+                if (!tryToShift(node)) {
+                    int indexChild = root.indexOfChild(node);
+                    int mergeNodeIndex = (indexChild == 0) ? indexChild + 1 : indexChild - 1;
+
+                    T shiftKey = (indexChild == 0) ? root.getKey(indexChild) : root.getKey(indexChild-1); // todo
+                  //  T shiftKey = indexChild == root.getKeysCnt() ? root.getKey(indexChild - 1) : root.getKey(indexChild); // todo
+                    Node<T> neighbor = root.getChild(mergeNodeIndex);
+                    Node<T> newNode = mergeNodes(node, neighbor);
+                    newNode.addKey(shiftKey);
+                    root.removeKey(shiftKey);
+
+                    if (root.getKeysCnt() == 0 && root == this.root) {
+                        //if (root == this.root) {
+                            this.root = newNode;
+                            root = this.root;
+//                        } else {
+//                            Node<T> root_root = root.root;
+//                            root_root.removeChild(root);
+//                            root_root.addChild(newNode);
+//                            root = root_root;
+//                        }
+                    } else {
+                        root.removeChild(neighbor);
+                        root.removeChild(node);
+                        root.addChild(newNode);
+                    }
+                    node.clean();
+                }
+                balance(root);
+          //  }
+        }
+
+    }
+
+    private void removeFromRoot(T o, Node<T> node){
+
+        int indexKey = node.indexOfKey(o);
+        Node<T> l_max = node.getChild(indexKey);
+        while (!l_max.isLeaf()) l_max = l_max.getRightChild();
+        T max = l_max.getLastKey();
+        node.removeKey(o);
+        node.addKey(max);
+        l_max.removeKey(max);
+        balance(l_max);
+       // balance(node);
+    }
+
+
+
+    private boolean tryToShift(Node<T> node){
+        if(node == root) return false;
+        Node<T> root = node.getRoot();
+        int index = root.indexOfChild(node);
+        if(index > 0  && root.getChild(index-1).getKeysCnt() > MIN_KEY){
+            rightShift(root, index);
+            return true;
+        }else if(index < root.getChildrenCnt()-1 && root.getChild(index +1).getKeysCnt() > MIN_KEY ){
+            leftShift(root, index);
+            return true;
+        }
+        return false;
+
+    }
+
+
+
+    private void leftShift(Node<T> root, int indexChild){
+
+        Node<T> neighbor = root.getChild(indexChild +1);
+        Node<T> node = root.getChild(indexChild);
+
+        T donorShiftedKey = neighbor.getFirstKey();
+        T rootShiftedKey = root.getKey(indexChild);
+
+        node.addKey(rootShiftedKey);
+        root.removeKey(rootShiftedKey);
+
+        root.addKey(donorShiftedKey);
+        neighbor.removeKey(donorShiftedKey);
+
+        if(!neighbor.isLeaf()){
+            Node<T> neighborLeftChild = neighbor.getLeftChild();
+            neighbor.removeChild(neighborLeftChild);
+            node.addChild(neighborLeftChild);
+        }
+
+    }
+
+    private void rightShift(Node<T>root, int indexChild){
+        Node<T> neighbor = root.getChild(indexChild - 1);
+        Node<T> node = root.getChild(indexChild);
+
+        T donorShiftedKey = neighbor.getLastKey();
+        T rootShiftedKey = root.getKey(indexChild - 1);
+
+
+        node.addKey(rootShiftedKey);
+        root.removeKey(rootShiftedKey);
+
+        root.addKey(donorShiftedKey);
+        neighbor.removeKey(donorShiftedKey);
+
+        if(!neighbor.isLeaf()){
+            Node<T> neighborRightChild = neighbor.getRightChild();
+            neighbor.removeChild(neighborRightChild);
+            node.addChild(neighborRightChild);
+        }
+
     }
 
     private Node<T>[] separateByMedian(Node<T> node) {
@@ -372,7 +549,7 @@ public class BTree<T> implements iTree<T> {
             }
         }
         if (!node.isLeaf()) {
-            Node[] children = node.getChilds();
+            Node[] children = node.getChildren();
             for (int i = 0; i < children.length; i++) {
                 if (i < left.getKeysCnt()) {
                     left.addChild(children[i]);
@@ -384,6 +561,24 @@ public class BTree<T> implements iTree<T> {
         return new Node[]{left, right};
     }
 
+    private Node<T> mergeNodes(Node<T> a, Node<T> b){
+        Node<T> newNode = new Node<>();
+        for (T t : a.getKeys()) {
+            newNode.addKey(t);
+        }
+        for (T t : b.getKeys()) {
+            newNode.addKey(t);
+        }
+        for (int i = 0; i < a.getChildrenCnt(); i++) {
+            newNode.addChild(a.getChild(i));
+        }
+        for (int i = 0; i < b.getChildrenCnt(); i++) {
+            newNode.addChild(b.getChild(i));
+        }
+
+        return newNode;
+    }
+
     public Node<T> findLeafToAdd(Node<T> node, T addedObj) {
         if (node.isLeaf()) return node;
 
@@ -392,156 +587,158 @@ public class BTree<T> implements iTree<T> {
         } else if (comparator.compare(addedObj, node.getLastKey()) >= 0) {
             return findLeafToAdd(node.getRightChild(), addedObj);
         } else {
-            for (int i = 0; i < node.getChildCnt(); i++) {
+            for (int i = 0; i < node.getKeysCnt()-1; i++) {
 
-                int left_c = comparator.compare(addedObj, node.getChild(i).getFirstKey());
-                int right_c = comparator.compare(addedObj, node.getChild(i).getLastKey());
-                int next_c = 2;
-                if(i != node.getChildCnt() -1){
-                    next_c = comparator.compare(addedObj, node.getChild(i+1).getFirstKey());
-                }
+                int left_c = comparator.compare(addedObj, node.getKey(i));
+                int right_c = comparator.compare(addedObj, node.getKey(i+1));
 
                 if (left_c >= 0 && right_c <= 0) {
-                    return findLeafToAdd(node.getChild(i), addedObj);
-                }else if(right_c >= 0 && next_c <= 0){
-                    try{
-                        int index1 =
-                    }
-                    return findLeafToAdd(node.getChild(i), addedObj);
+                    return findLeafToAdd(node.getChild(i+1), addedObj);
                 }
             }
         }
         return null;
     }
 
+    public boolean test(){
+       return new Tester().test();
+    }
 
-    public boolean test() {
-        int depth = depth();
-        int size = size();
-        boolean res = true;
+    private class Tester{
+        public boolean test() {
+            int depth = depth();
+            int size = size();
+            boolean res = true;
 //        HashMap<Node<T>, Integer> _nodes = getNodeMap();
-        ArrayList<Node<T>> nodes = getNodeList();
-        double min = log(ORDER, size);
-        double max = log((int)(ORDER/2), ((size-1)/2));
-
-        if(log(ORDER, size)  -1 > depth || log((int)(ORDER/2), ((size-1)/2)) +1  < depth ){
-            System.out.println("ERROR DEPTH (ORDER)");
-            res = false;
-        }
-        if(!checkDepth()){
-            System.out.println("ERROR DEPTH");
-            res = false;
-        }
-
-        for (Node<T> node : nodes) {
-            if(node.getKeysCnt() +1 != node.getChildCnt() && !node.isLeaf()){
-                System.out.println("ERROR NODE Child numbers : "+ node);
+            ArrayList<Node<T>> nodes = getNodeList();
+            double min = log(ORDER, size);
+            double max = log((int)(ORDER/2), ((size-1)/2));
+            if(size > 2)
+                if(log(ORDER, size)  -1 > depth || log((int)(ORDER/2), ((size-1)/2)) +1  < depth ){
+                    System.out.println("ERROR DEPTH (ORDER)");
+                    res = false;
+                }
+            if(!checkDepth()){
+                System.out.println("ERROR DEPTH");
                 res = false;
             }
-            if(!node.checkSortKeys()){
-                System.out.println("ERROR NODE key sort : "+ node);
+
+            for (Node<T> node : nodes) {
+                if(node.getKeysCnt() +1 != node.getChildrenCnt() && !node.isLeaf()){
+                    System.out.println("ERROR NODE Child numbers : "+ node);
+                    res = false;
+                }
+                if(!node.checkSortKeys()){
+                    System.out.println("ERROR NODE key sort : "+ node);
+                    res = false;
+                }
+                if((node.getKeysCnt() < MIN_KEY && node != root)
+                        || node.getKeysCnt() > MAX_KEY ){
+                        System.out.println("ERROR NODE key cnt : "+ node);
+                        res = false;
+                }
+            }
+
+            if(!checkSort()){
+                System.out.println("ERROR SORT");
                 res = false;
             }
+
+            return res;
+
         }
 
-        if(!checkSort()){
-            System.out.println("ERROR SORT");
-            res = false;
+        private boolean checkDepth(){
+            return getMinDepth() == depth();
         }
 
-        return res;
-
-    }
-
-    private boolean checkDepth(){
-        return getMinDepth() == depth();
-    }
-
-    private int getMinDepth(){
-        return calcMinDepthRec(root, -1);
-    }
-
-    private int calcMinDepthRec(Node root, int depth) { //todo without rec
-        if (root == null) return depth;
-        int[] ds = new int[root.getChildCnt()];
-        for (int i = 0; i < ds.length; i++) {
-            ds[i] = culcDepthRec(root.getChild(i), depth + 1);
-        }
-        if (ds.length == 0) {
-            return depth + 1;
+        private int getMinDepth(){
+            return calcMinDepthRec(root, -1);
         }
 
-        return min(ds);
-    }
+        private int calcMinDepthRec(Node root, int depth) { //todo without rec
+            if (root == null) return depth;
+            int[] ds = new int[root.getChildrenCnt()];
+            for (int i = 0; i < ds.length; i++) {
+                ds[i] = culcDepthRec(root.getChild(i), depth + 1);
+            }
+            if (ds.length == 0) {
+                return depth + 1;
+            }
 
-    private int min(int[] val) {
-        int min = Integer.MAX_VALUE;
-        for (int i : val) {
-            if (i < min) min = i;
+            return min(ds);
         }
-        return min;
-    }
 
-    private boolean checkSort(){
-        T[] keys = getSortKeys();
-        for (int i = 1; i < keys.length; i++) {
-            if(comparator.compare(keys[i-1], keys[i]) > 0) return false;
+        private int min(int[] val) {
+            int min = Integer.MAX_VALUE;
+            for (int i : val) {
+                if (i < min) min = i;
+            }
+            return min;
         }
-        return true;
-    }
 
-    private T[] getSortKeys(){
-        ArrayList<T> arrayList = new ArrayList<>();
-        fillKeys(arrayList, root);
-        return (T[])arrayList.toArray();
-
-    }
-
-    private  void  fillKeys(ArrayList<T> keys, Node<T> root){
-        if(root.isLeaf()) {
-            keys.addAll(Arrays.asList(root.getKeys()));
-            return;
+        private boolean checkSort(){
+            T[] keys = getSortKeys();
+            for (int i = 1; i < keys.length; i++) {
+                if(comparator.compare(keys[i-1], keys[i]) > 0) return false;
+            }
+            return true;
         }
-        for (int i = 0; i < root.getChilds().length; i++) {
-            fillKeys(keys, root.getChild(i));
-            if(i < root.getKeys().length){
-                keys.add(root.getKey(i));
+
+        private T[] getSortKeys(){
+            ArrayList<T> arrayList = new ArrayList<>();
+            fillKeys(arrayList, root);
+            return (T[])arrayList.toArray();
+
+        }
+
+        private  void  fillKeys(ArrayList<T> keys, Node<T> root){
+            if(root.isLeaf()) {
+                keys.addAll(Arrays.asList(root.getKeys()));
+                return;
+            }
+            for (int i = 0; i < root.getChildren().length; i++) {
+                fillKeys(keys, root.getChild(i));
+                if(i < root.getKeys().length){
+                    keys.add(root.getKey(i));
+                }
+            }
+
+        }
+
+
+        private ArrayList<Node<T>> getNodeList(){
+            ArrayList<Node<T>> list = new ArrayList<>();
+            fillList(list, root);
+            return list;
+        }
+
+        private void fillList(ArrayList<Node<T>> list, Node<T> node){
+            list.add(node);
+            if(node.isLeaf()) return;
+            for (Node<T> tNode : node.children) {
+                fillList(list, tNode);
             }
         }
 
-    }
-
-
-    private ArrayList<Node<T>> getNodeList(){
-        ArrayList<Node<T>> list = new ArrayList<>();
-        fillList(list, root);
-        return list;
-    }
-
-    private void fillList(ArrayList<Node<T>> list, Node<T> node){
-        list.add(node);
-        if(node.isLeaf()) return;
-        for (Node<T> tNode : node.child) {
-            fillList(list, tNode);
+        private HashMap<Node<T>, Integer>  getNodeMap(){
+            HashMap<Node<T>, Integer> nodeMap = new HashMap<>();
+            fillMap(nodeMap, root, 0);
+            return nodeMap;
         }
-    }
 
-    private HashMap<Node<T>, Integer>  getNodeMap(){
-        HashMap<Node<T>, Integer> nodeMap = new HashMap<>();
-        fillMap(nodeMap, root, 0);
-        return nodeMap;
-    }
-
-    private void fillMap(HashMap<Node<T>, Integer> map, Node<T> root, int depth){
-        map.put(root,depth);
-        if(!root.isLeaf()) {
-            for (Node node : root.child) {
-                fillMap(map, node, depth + 1);
+        private void fillMap(HashMap<Node<T>, Integer> map, Node<T> root, int depth){
+            map.put(root,depth);
+            if(!root.isLeaf()) {
+                for (Node node : root.children) {
+                    fillMap(map, node, depth + 1);
+                }
             }
         }
+
+        private double log(double a, double b){
+            return Math.log(b)/Math.log(a);
+        }
     }
 
-    private double log(double a, double b){
-        return Math.log(b)/Math.log(a);
-    }
 }
