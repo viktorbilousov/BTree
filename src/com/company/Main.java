@@ -3,15 +3,12 @@ package com.company;
 import com.company.tools.ArrayGenerator;
 import com.company.tree.BTree;
 
-import java.util.Arrays;
-import java.util.Random;
 
 public class Main {
 
     public static void main(String[] args) {
-        int[] integers = ArrayGenerator.nextArrayInt(50, 100);
-       // integers = new int[]{278, 600, 639, 530, 191, 941, 244, 493, 681, 117, 520, 173, 693, 960, 499, 365, 11, 612, 102, 215};
-        //System.out.println(Arrays.toString(integers));
+        int[] integers = ArrayGenerator.nextArrayInt(500, 500, -500);
+        integers = new int[]{13, 16, 10, 11, 24, 4, 12, 2, 15, 18, 22, 26, 17, 14, 25, 1, 7, 3, 21, 8, 19, 5, 23, 6, 20, 9};
         BTree<Integer> bTree = new BTree<>(5, Integer::compareTo);
 
         for (int i = 0; i < integers.length; i++) {
@@ -21,13 +18,12 @@ public class Main {
         BTree<Integer> newTree = bTree.copy();
         System.out.println(newTree);
 
-        //System.out.println(bTree.test());
         System.out.println(bTree.size() + " " + bTree.depth());
 
-        for (int i = 0; i < integers.length; i++) {
-            //System.out.println((i + 1) + " "+ integers[i]);
+        for (int i = integers.length - 1; i >= 0; i--) {
             bTree.remove(integers[i]);
-
+            System.out.println(bTree);
+            System.out.println();
         }
 
 
