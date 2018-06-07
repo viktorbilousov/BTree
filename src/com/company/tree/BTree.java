@@ -246,10 +246,10 @@ public class BTree<T> implements iTree<T> {
 
     public BTree(int order, Comparator<T> comparator) {
         this.comparator = comparator;
+       if(order < 3) throw new IllegalArgumentException("Order < 3!");
         ORDER = order;
         MAX_KEY = ORDER - 1;
-        MIN_KEY = ORDER / 2 - 1;
-
+        MIN_KEY = (ORDER > 3 )? ORDER / 2 - 1 : 1;
     }
 
     @Override
@@ -331,9 +331,8 @@ public class BTree<T> implements iTree<T> {
             removeNode.removeKey(o);
             balance(removeNode);
         }else {
-            removeFromRoot(o, removeNode);
+            removeFromEdge(o, removeNode);
         }
-
 
         size--;
         reculcDepth();
@@ -416,57 +415,47 @@ public class BTree<T> implements iTree<T> {
             root.addChild(right);
             node.clean();
             balance(root);
-        }
-        else if(node.getKeysCnt() < MIN_KEY) {
-            if(node == root) return;
-            Node<T> root = node.root;
+        } else if (node.getKeysCnt() < MIN_KEY) {
+            if (node == root) return;
 
-          //  if(node.isLeaf()) {
-                if (!tryToShift(node)) {
-                    int indexChild = root.indexOfChild(node);
-                    int mergeNodeIndex = (indexChild == 0) ? indexChild + 1 : indexChild - 1;
+            if (!tryToShift(node)) {
+                Node<T> root = node.root;
+                int indexChild = root.indexOfChild(node);
+                int mergeNodeIndex = (indexChild == 0) ? indexChild + 1 : indexChild - 1; //nightbar
+                T shiftKey = (indexChild == 0) ? root.getKey(indexChild) : root.getKey(indexChild - 1); // in root
 
-                    T shiftKey = (indexChild == 0) ? root.getKey(indexChild) : root.getKey(indexChild-1); // todo
-                  //  T shiftKey = indexChild == root.getKeysCnt() ? root.getKey(indexChild - 1) : root.getKey(indexChild); // todo
-                    Node<T> neighbor = root.getChild(mergeNodeIndex);
-                    Node<T> newNode = mergeNodes(node, neighbor);
-                    newNode.addKey(shiftKey);
-                    root.removeKey(shiftKey);
+                Node<T> neighbor = root.getChild(mergeNodeIndex);
+                Node<T> newNode = mergeNodes(node, neighbor);
+                newNode.addKey(shiftKey);
+                root.removeKey(shiftKey);
 
-                    if (root.getKeysCnt() == 0 && root == this.root) {
-                        //if (root == this.root) {
-                            this.root = newNode;
-                            root = this.root;
-//                        } else {
-//                            Node<T> root_root = root.root;
-//                            root_root.removeChild(root);
-//                            root_root.addChild(newNode);
-//                            root = root_root;
-//                        }
-                    } else {
-                        root.removeChild(neighbor);
-                        root.removeChild(node);
-                        root.addChild(newNode);
-                    }
-                    node.clean();
+                if (root.getKeysCnt() == 0 && root == this.root) {
+                    this.root = newNode;
+                    root = this.root;
+                } else {
+                    root.removeChild(neighbor);
+                    root.removeChild(node);
+                    root.addChild(newNode);
                 }
+                node.clean();
                 balance(root);
-          //  }
+            }
         }
-
     }
 
-    private void removeFromRoot(T o, Node<T> node){
+
+    private void removeFromEdge(T o, Node<T> node){
 
         int indexKey = node.indexOfKey(o);
         Node<T> l_max = node.getChild(indexKey);
         while (!l_max.isLeaf()) l_max = l_max.getRightChild();
         T max = l_max.getLastKey();
+
         node.removeKey(o);
         node.addKey(max);
         l_max.removeKey(max);
+
         balance(l_max);
-       // balance(node);
     }
 
 
@@ -533,7 +522,7 @@ public class BTree<T> implements iTree<T> {
     }
 
     private Node<T>[] separateByMedian(Node<T> node) {
-        int median = node.getKeysCnt() / 2 - 1;
+        int median = node.getKeysCnt() / 2 ;
 
         Node<T> left = new Node<>();
         Node<T> right = new Node<>();
@@ -549,7 +538,7 @@ public class BTree<T> implements iTree<T> {
             }
         }
         if (!node.isLeaf()) {
-            Node[] children = node.getChildren();
+            Node<T>[] children = node.getChildren();
             for (int i = 0; i < children.length; i++) {
                 if (i < left.getKeysCnt()) {
                     left.addChild(children[i]);
