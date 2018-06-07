@@ -109,7 +109,6 @@ public class BTree<T> implements iTree<T> {
 
         //endregion
 
-
         public boolean isLeaf() {
             return children.length == 0;
         }
@@ -221,15 +220,6 @@ public class BTree<T> implements iTree<T> {
             keys = (T[]) new Object[0];
         }
 
-        private boolean checkSortKeys() {
-            if (keys.length <= 1) return true;
-
-            for (int i = 1; i < keys.length - 1; i++) {
-                if (_comp.compare(keys[i - 1], keys[i]) == 1) return false;
-            }
-            return true;
-        }
-
         @Override
         public String toString() {
             String outLine = "{";
@@ -249,7 +239,7 @@ public class BTree<T> implements iTree<T> {
        if(order < 3) throw new IllegalArgumentException("Order < 3!");
         ORDER = order;
         MAX_KEY = ORDER - 1;
-        MIN_KEY = (ORDER > 3 )? ORDER / 2 - 1 : 1;
+        MIN_KEY = (ORDER > 3 ) ? (ORDER / 2 - 1) : 1;
     }
 
     @Override
@@ -262,7 +252,7 @@ public class BTree<T> implements iTree<T> {
         return depth;
     }
 
-    private void reculcDepth() {
+    private void recalcDepth() {
         depth = 0;
         Node pointer = root;
         while (!pointer.isLeaf()) {
@@ -297,7 +287,7 @@ public class BTree<T> implements iTree<T> {
         balance(addingLeaf);
 
         size++;
-        reculcDepth();
+        recalcDepth();
 
     }
 
@@ -319,7 +309,7 @@ public class BTree<T> implements iTree<T> {
         }
 
         size--;
-        reculcDepth();
+        recalcDepth();
         return true;
     }
 
@@ -407,7 +397,6 @@ public class BTree<T> implements iTree<T> {
         return h;
     }
 
-
     @Override
     public BTree<T> copy() {
         BTree<T> tree = new BTree<>(ORDER, comparator);
@@ -422,7 +411,6 @@ public class BTree<T> implements iTree<T> {
 
     public Node<T> recCopy(Node<T> node){
         Node<T> newNode = new Node<>();
-
 
         T[] keys = (T[])new Object[node.getKeysCnt()];
         for (int i = 0; i < node.getKeysCnt(); i++) {
@@ -465,9 +453,9 @@ public class BTree<T> implements iTree<T> {
             if (node == root) return;
 
             if (!tryToShift(node)) {
-                Node<T> root = node.root;
+                Node<T> root = node.getRoot();
                 int indexChild = root.indexOfChild(node);
-                int mergeNodeIndex = (indexChild == 0) ? indexChild + 1 : indexChild - 1; //nightbar
+                int mergeNodeIndex = (indexChild == 0) ? indexChild + 1 : indexChild - 1; //neighbor
                 T shiftKey = (indexChild == 0) ? root.getKey(indexChild) : root.getKey(indexChild - 1); // in root
 
                 Node<T> neighbor = root.getChild(mergeNodeIndex);
@@ -593,6 +581,7 @@ public class BTree<T> implements iTree<T> {
 
     private Node<T> mergeNodes(Node<T> a, Node<T> b){
         Node<T> newNode = new Node<>();
+
         for (T t : a.getKeys()) {
             newNode.addKey(t);
         }
@@ -629,6 +618,5 @@ public class BTree<T> implements iTree<T> {
         }
         return null;
     }
-
 
 }
